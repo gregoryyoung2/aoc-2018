@@ -3,6 +3,7 @@
 #include <ctime>
 #include <set>
 #include <string>
+#include <algorithm>
 
 #include <stdlib.h>
 
@@ -39,7 +40,7 @@ void day16() {
         opcodes[i] = (Device::opcode) i;
     }
     
-    vector<set<Device::opcode>> codes(16, set<Device::opcode>(opcodes.begin(), opcodes.end()));
+    vector<set<Device::opcode>> opcodeSet(16, set<Device::opcode>(opcodes.begin(), opcodes.end()));
     
     Device device;
     
@@ -48,7 +49,6 @@ void day16() {
     vector<int> instr(4, 0);
     
     unsigned int count = 0;
-    unsigned int matches = 0;
     
     while (true) {
         try {
@@ -63,27 +63,71 @@ void day16() {
             break;
         }
         
-        matches = 0;
         for (int i = 0; i < opcodes.size(); i++) {
+            if (opcodeSet[instr[0]].find(opcodes[i]) == opcodeSet[instr[0]].end()) continue;
             device.setReg(begin);
             try {
                 const vector<int> & result = device.safeRunOp(opcodes[i], instr[1], instr[2], instr[3]);
+                if (result != end) {
+                    opcodeSet[instr[0]].erase(opcodes[i]);
+                    if (opcodeSet[instr[0]].size() == 1)
+                        count++;
+                }
                 
-                cout << "Actual: ";
-                printVec(result);
-                
-                if (result == end)
-                    matches++;
             }
             catch (...) {
-                continue;
+                opcodeSet[instr[0]].erase(opcodes[i]);
+                if (opcodeSet[instr[0]].size() == 1)
+                    count++;
             }
         }
         
-        if (matches >= 3) count++;
+        if (count == 16) break;
+        
     }
     
-    cout << "Count: " << count << '\n';
+    Device::opcode toFind;
+    set<int> goodIndexes;
+    
+    while (goodIndexes.size() < 16) {
+        for (int i = 0; i < opcodeSet.size(); i++) {
+            if (goodIndexes.find(i) != goodIndexes.end()) continue;
+            if (opcodeSet[i].size() == 1) {
+                toFind = *(opcodeSet[i].begin());
+                goodIndexes.insert(i);
+                break;
+            }
+        }
+        for (int i = 0; i < opcodeSet.size(); i++) {
+            if (goodIndexes.find(i) != goodIndexes.end()) continue;
+            opcodeSet[i].erase(toFind);
+        }
+    }
+    
+    vector<Device::opcode> codes(16);
+    
+    for (unsigned int i = 0; i < opcodeSet.size(); i++) {
+        assert(opcodeSet[i].size() == 1);
+        cout << *(opcodeSet[i].begin()) << ' ';
+        codes[i] = *(opcodeSet[i].begin());
+    }
+    
+    cout << '\n';
+
+    
+    device.setOpcodes(codes);
+    
+    while (input.peek() != std::ifstream::traits_type::eof()) {
+        
+            parseInstr(input, instr);
+            device.instruction(instr);
+               
+    }
+    
+    printVec(device.getReg());
+    
+    
+    
     
 }
 
@@ -117,8 +161,9 @@ vector<int> & parseReg(ifstream & in, vector<int> & result) {
 
 vector<int> & parseInstr(ifstream & in, vector<int> & result) {
     
-    for (int i = 0; i < result.size(); i++)
+    for (int i = 0; i < result.size(); i++) {
         in >> result[i];
+    }
     
     return result;
     

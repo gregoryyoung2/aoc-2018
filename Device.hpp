@@ -18,7 +18,11 @@ public:
     
     Device();
     
+    void setOpcodes(const std::vector<opcode> &);
+    
     void setReg(const std::vector<int> &);
+    
+    const std::vector<int> & getReg();
     
     const std::vector<int> & instruction(const std::vector<int> &);
     
@@ -27,8 +31,11 @@ public:
     const std::vector<int> & safeRunOp(const opcode, const int, const int, const int);
     
 private:
+    
     std::vector<int> instr;
     std::vector<int> reg;
+    
+    std::vector<opcode> opcodes;
     
     void addRegister();
     void addImmediate();

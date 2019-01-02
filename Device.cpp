@@ -11,8 +11,17 @@ void Device::setReg(const vector<int> & in) {
     reg = in;
 }
 
+const vector<int> & Device::getReg() {
+    return reg;
+}
+
+void Device::setOpcodes(const vector<opcode> & codes) {
+    opcodes = codes;
+}
+
 const vector<int> & Device::instruction(const vector<int> & in) {
     instr = in;
+    runOp(opcodes[instr[0]], in[1], in[2], in[3]);
     return reg;
 }
 
